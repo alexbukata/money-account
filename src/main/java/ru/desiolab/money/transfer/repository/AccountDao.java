@@ -3,6 +3,7 @@ package ru.desiolab.money.transfer.repository;
 import org.h2.jdbcx.JdbcConnectionPool;
 import ru.desiolab.money.transfer.dto.Account;
 import ru.desiolab.money.transfer.dto.AccountFactory;
+import ru.desiolab.money.transfer.error.AccountNotFoundException;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -19,13 +20,22 @@ public class AccountDao {
     private final AccountFactory accountFactory;
 
     @Inject
-    private AccountDao(JdbcConnectionPool jdbcConnectionPool, AccountFactory accountFactory) {
+    AccountDao(JdbcConnectionPool jdbcConnectionPool, AccountFactory accountFactory) {
         this.jdbcConnectionPool = jdbcConnectionPool;
         this.accountFactory = accountFactory;
     }
 
-    public Connection getConnection() throws SQLException {
-        return jdbcConnectionPool.getConnection();
+    public void doInTransaction(Consumer<Connection> action) throws Exception {
+        Connection connection = jdbcConnectionPool.getConnection();
+        connection.setAutoCommit(false);
+        connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+        try {
+            action.accept(connection);
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+            throw e;
+        }
     }
 
     public Account getAccount(Connection connection, Integer accountId) throws SQLException {
@@ -33,7 +43,7 @@ public class AccountDao {
         PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setInt(1, accountId);
         boolean haveResult = preparedStatement.execute();
-        RuntimeException notFoundException = new RuntimeException(format("Can't find account with id=%d", accountId));
+        AccountNotFoundException notFoundException = new AccountNotFoundException(format("Can't find account with id=%d", accountId));
         if (!haveResult) {
             throw notFoundException;
         }

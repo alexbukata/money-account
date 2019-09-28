@@ -1,55 +1,101 @@
 package ru.desiolab.money.transfer.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.net.HttpHeaders;
-import io.jooby.JoobyTest;
-import io.jooby.MediaType;
+import com.google.inject.Guice;
+import com.google.inject.testing.fieldbinder.Bind;
+import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.desiolab.money.transfer.TestApp;
+import org.mockito.Mockito;
+import ru.desiolab.money.transfer.dto.Account;
 import ru.desiolab.money.transfer.dto.AccountTransferRequest;
 import ru.desiolab.money.transfer.dto.Response;
+import ru.desiolab.money.transfer.repository.AccountDao;
+import ru.desiolab.money.transfer.repository.Consumer;
 
-import java.io.IOException;
+import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
 
-import static java.net.http.HttpRequest.BodyPublishers.ofString;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
-@JoobyTest(value = TestApp.class, port = 8911)
 class AccountTransferControllerTest {
 
-    private HttpClient http;
-    private ObjectMapper objectMapper;
+    @Bind
+    private AccountDao accountDao = Mockito.mock(AccountDao.class);
+
+    @Inject
+    private AccountTransferController accountTransferController;
 
     @BeforeEach
-    void setUp() {
-        http = HttpClient.newBuilder().build();
-        objectMapper = new ObjectMapper();
+    void setUp() throws Exception {
+        doAnswer(invocationOnMock -> {
+            Consumer consumer = invocationOnMock.getArgument(0, Consumer.class);
+            consumer.accept(Mockito.mock(Connection.class));
+            return null;
+        }).when(accountDao).doInTransaction(any());
+        Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
     }
 
     @Test
-    void transferMoneyHappyPath() throws IOException, URISyntaxException, InterruptedException {
+    void transferMoneySuccess() throws Exception {
+        //arrange
+        when(accountDao.getAccount(any(), eq(1))).thenReturn(firstAccount());
+        when(accountDao.getAccount(any(), eq(2))).thenReturn(secondAccount());
         AccountTransferRequest requestDto = new AccountTransferRequest()
                 .fromAccountId(1)
                 .toAccountId(2)
                 .amount(BigDecimal.valueOf(100L));
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI("http://localhost:8911/account/transfer"))
-                .POST(ofString(objectMapper.writeValueAsString(requestDto), StandardCharsets.UTF_8))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.JSON)
-                .header(HttpHeaders.ACCEPT, MediaType.JSON)
-                .build();
-        String responseRaw = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)).body();
-        Response<String> response = objectMapper.readValue(responseRaw, new TypeReference<Response<String>>() {
-        });
+        //act
+        Response<String> response = accountTransferController.transferMoney(requestDto);
+        //assert
         assertTrue(response.success());
+        verify(accountDao).updateAccountAmount(any(), eq(1), eq(BigDecimal.valueOf(900)));
+        verify(accountDao).updateAccountAmount(any(), eq(2), eq(BigDecimal.valueOf(110)));
+    }
+
+    @Test
+    void sourceAccountNotEnoughMoney() throws Exception {
+        //arrange
+        when(accountDao.getAccount(any(), eq(1))).thenReturn(firstAccount());
+        when(accountDao.getAccount(any(), eq(2))).thenReturn(secondAccount());
+        AccountTransferRequest requestDto = new AccountTransferRequest()
+                .fromAccountId(1)
+                .toAccountId(2)
+                .amount(BigDecimal.valueOf(10000L));
+        //act
+        assertThrows(RuntimeException.class, () -> accountTransferController.transferMoney(requestDto));
+        //assert
+        verify(accountDao, times(0)).updateAccountAmount(any(), any(), any());
+    }
+
+    @Test
+    void sourceAccountNegativeAmount() {
+        //arrange
+        AccountTransferRequest requestDto = new AccountTransferRequest()
+                .fromAccountId(1)
+                .toAccountId(2)
+                .amount(BigDecimal.valueOf(-100L));
+        //act
+        assertThrows(RuntimeException.class, () -> accountTransferController.transferMoney(requestDto));
+        //assert
+        verifyZeroInteractions(accountDao);
+    }
+
+    private Account firstAccount() {
+        return new Account()
+                .id(1)
+                .customerName("name1")
+                .amount(BigDecimal.valueOf(1000));
+    }
+
+    private Account secondAccount() {
+        return new Account()
+                .id(2)
+                .customerName("name2")
+                .amount(BigDecimal.valueOf(10));
     }
 }

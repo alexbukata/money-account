@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 import org.h2.tools.Server;
 import ru.desiolab.money.transfer.controller.AccountTransferController;
 import ru.desiolab.money.transfer.extension.SchemaApplier;
+import ru.desiolab.money.transfer.handler.AccountTransferHandler;
 
 public class App extends Jooby {
 
@@ -34,7 +35,7 @@ public class App extends Jooby {
 
     private void initHandlers() {
         post("/account/transfer",
-                ctx -> require(AccountTransferController.class).transferMoney(ctx)
+                ctx -> new AccountTransferHandler(require(AccountTransferController.class)).apply(ctx)
         ).produces(MediaType.json).consumes(MediaType.json);
     }
 

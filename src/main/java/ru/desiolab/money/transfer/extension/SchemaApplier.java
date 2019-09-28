@@ -6,10 +6,8 @@ import org.h2.jdbcx.JdbcConnectionPool;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -22,9 +20,9 @@ public class SchemaApplier {
         this.jdbcConnectionPool = jdbcConnectionPool;
     }
 
-    private void apply() throws URISyntaxException, IOException, SQLException {
-        URL schemaSqlStream = getClass().getClassLoader().getResource("sql/schema.sql");
-        String schemaSql = Files.readString(Path.of(schemaSqlStream.toURI()));
+    public void apply() throws IOException, SQLException {
+        InputStream schemaSqlStream = getClass().getClassLoader().getResourceAsStream("sql/schema.sql");
+        String schemaSql = new String(schemaSqlStream.readAllBytes(), StandardCharsets.UTF_8);
         Connection connection = jdbcConnectionPool.getConnection();
         connection.createStatement().execute(schemaSql);
     }
