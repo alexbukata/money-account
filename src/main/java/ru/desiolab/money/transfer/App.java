@@ -3,6 +3,7 @@ package ru.desiolab.money.transfer;
 import com.google.inject.Module;
 import io.jooby.Jooby;
 import io.jooby.MediaType;
+import io.jooby.ServerOptions;
 import io.jooby.di.GuiceModule;
 import io.jooby.json.JacksonModule;
 import lombok.Setter;
@@ -23,6 +24,9 @@ public class App extends Jooby {
     }
 
     public void init() {
+        setServerOptions(new ServerOptions()
+                .setIoThreads(config.workerNumber / 8)
+                .setWorkerThreads(config.workerNumber));
         initModules();
         runH2WebServer();
         initHandlers();
@@ -51,6 +55,7 @@ public class App extends Jooby {
     @Setter
     @Accessors(fluent = true)
     public static class Config {
+        private int workerNumber;
         private boolean enableWebServer = false;
         private Module module;
     }
