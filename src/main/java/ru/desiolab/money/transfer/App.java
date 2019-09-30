@@ -8,6 +8,7 @@ import io.jooby.json.JacksonModule;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
+import org.h2.jdbcx.JdbcConnectionPool;
 import org.h2.tools.Server;
 import ru.desiolab.money.transfer.controller.AccountTransferController;
 import ru.desiolab.money.transfer.extension.SchemaApplier;
@@ -25,6 +26,7 @@ public class App extends Jooby {
         initModules();
         runH2WebServer();
         initHandlers();
+        onStop(() -> require(JdbcConnectionPool.class).dispose());
     }
 
     private void initModules() {
