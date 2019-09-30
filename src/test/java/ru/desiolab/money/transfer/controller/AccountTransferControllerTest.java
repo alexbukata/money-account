@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import ru.desiolab.money.transfer.dto.Account;
 import ru.desiolab.money.transfer.dto.AccountTransferRequest;
+import ru.desiolab.money.transfer.error.InvalidRequestException;
+import ru.desiolab.money.transfer.error.NotEnoughMoneyException;
 import ru.desiolab.money.transfer.repository.AccountDao;
 import ru.desiolab.money.transfer.repository.Consumer;
 
@@ -64,7 +66,7 @@ class AccountTransferControllerTest {
                 .toAccountId(2)
                 .amount(BigDecimal.valueOf(10000L));
         //act
-        assertThrows(RuntimeException.class, () -> accountTransferController.transferMoney(requestDto));
+        assertThrows(NotEnoughMoneyException.class, () -> accountTransferController.transferMoney(requestDto));
         //assert
         verify(accountDao, times(0)).updateAccountAmount(any(), any(), any());
     }
@@ -77,7 +79,7 @@ class AccountTransferControllerTest {
                 .toAccountId(2)
                 .amount(BigDecimal.valueOf(-100L));
         //act
-        assertThrows(RuntimeException.class, () -> accountTransferController.transferMoney(requestDto));
+        assertThrows(InvalidRequestException.class, () -> accountTransferController.transferMoney(requestDto));
         //assert
         verifyZeroInteractions(accountDao);
     }
