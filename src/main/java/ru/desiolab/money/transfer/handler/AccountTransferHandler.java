@@ -28,13 +28,11 @@ public class AccountTransferHandler implements Route.Handler {
             AccountTransferRequest request = ctx.body(AccountTransferRequest.class, MediaType.json);
             return accountTransferController.transferMoney(request);
         } catch (JsonProcessingException e) {
-            log.error("transferMoney.err", e);
             ctx.setResponseCode(StatusCode.BAD_REQUEST);
             return new Response<String>()
                     .success(false)
                     .errorMessage("Allowed fields in request: 'fromAccountId', 'toAccountId', 'amount'");
         } catch (Exception e) {
-            log.error("transferMoney.err", e);
             ctx.setResponseCode(StatusCode.SERVER_ERROR_CODE);
             return new Response<String>()
                     .success(false)

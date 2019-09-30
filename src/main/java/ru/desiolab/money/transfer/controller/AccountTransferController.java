@@ -20,11 +20,16 @@ public class AccountTransferController {
     }
 
     public Response<String> transferMoney(AccountTransferRequest request) throws Exception {
-        log.info("transferMoney.in");
-        validate(request);
-        Response<String> response = accountTransferService.transferMoney(request);
-        log.info("transferMoney.out");
-        return response;
+        try {
+            log.info("transferMoney.in");
+            validate(request);
+            Response<String> response = accountTransferService.transferMoney(request);
+            log.info("transferMoney.out");
+            return response;
+        } catch (Exception e) {
+            log.error("transferMoney.err", e);
+            throw e;
+        }
     }
 
     private void validate(AccountTransferRequest request) {
