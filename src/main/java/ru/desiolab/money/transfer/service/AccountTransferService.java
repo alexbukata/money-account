@@ -3,7 +3,6 @@ package ru.desiolab.money.transfer.service;
 import lombok.extern.slf4j.Slf4j;
 import ru.desiolab.money.transfer.dto.Account;
 import ru.desiolab.money.transfer.dto.AccountTransferRequest;
-import ru.desiolab.money.transfer.dto.Response;
 import ru.desiolab.money.transfer.error.NotEnoughMoneyException;
 import ru.desiolab.money.transfer.repository.AccountDao;
 
@@ -20,11 +19,10 @@ public class AccountTransferService {
         this.accountDao = accountDao;
     }
 
-    public Response<String> transferMoney(AccountTransferRequest request) throws Exception {
+    public void transferMoney(AccountTransferRequest request) throws Exception {
         log.info("transferMoney.in request={}", request.toString());
         doTransferMoney(request.fromAccountId(), request.toAccountId(), request.amount());
         log.info("transferMoney.out");
-        return new Response<String>().success(true);
     }
 
     private void doTransferMoney(Integer fromAccountId, Integer toAccountId, BigDecimal amount) throws Exception {

@@ -26,15 +26,16 @@ public class AccountTransferHandler implements Route.Handler {
     public Object apply(@Nonnull Context ctx) {
         try {
             AccountTransferRequest request = ctx.body(AccountTransferRequest.class, MediaType.json);
-            return accountTransferController.transferMoney(request);
+            accountTransferController.transferMoney(request);
+            return new Response().success(true);
         } catch (JsonProcessingException e) {
             ctx.setResponseCode(StatusCode.BAD_REQUEST);
-            return new Response<String>()
+            return new Response()
                     .success(false)
                     .errorMessage("Allowed fields in request: 'fromAccountId', 'toAccountId', 'amount'");
         } catch (Exception e) {
-            ctx.setResponseCode(StatusCode.SERVER_ERROR_CODE);
-            return new Response<String>()
+            ctx.setResponseCode(StatusCode.SERVER_ERROR);
+            return new Response()
                     .success(false)
                     .errorMessage("Internal error occurred");
         }

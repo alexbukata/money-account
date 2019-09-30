@@ -39,9 +39,9 @@ public class App extends Jooby {
         install(new SchemaApplier.Extension());
     }
 
-    private void initHandlers() {
+    void initHandlers() {
         post("/account/transfer",
-                ctx -> new AccountTransferHandler(require(AccountTransferController.class)).apply(ctx)
+                ctx -> new AccountTransferHandler(ctx.require(AccountTransferController.class)).apply(ctx)
         ).produces(MediaType.json).consumes(MediaType.json);
     }
 

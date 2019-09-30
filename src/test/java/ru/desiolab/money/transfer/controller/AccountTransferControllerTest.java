@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import ru.desiolab.money.transfer.dto.Account;
 import ru.desiolab.money.transfer.dto.AccountTransferRequest;
-import ru.desiolab.money.transfer.dto.Response;
 import ru.desiolab.money.transfer.repository.AccountDao;
 import ru.desiolab.money.transfer.repository.Consumer;
 
@@ -17,7 +16,6 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -50,9 +48,8 @@ class AccountTransferControllerTest {
                 .toAccountId(2)
                 .amount(BigDecimal.valueOf(100L));
         //act
-        Response<String> response = accountTransferController.transferMoney(requestDto);
+        accountTransferController.transferMoney(requestDto);
         //assert
-        assertTrue(response.success());
         verify(accountDao).updateAccountAmount(any(), eq(1), eq(BigDecimal.valueOf(900)));
         verify(accountDao).updateAccountAmount(any(), eq(2), eq(BigDecimal.valueOf(110)));
     }

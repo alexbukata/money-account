@@ -2,7 +2,6 @@ package ru.desiolab.money.transfer.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.desiolab.money.transfer.dto.AccountTransferRequest;
-import ru.desiolab.money.transfer.dto.Response;
 import ru.desiolab.money.transfer.error.InvalidRequestException;
 import ru.desiolab.money.transfer.service.AccountTransferService;
 
@@ -19,13 +18,12 @@ public class AccountTransferController {
         this.accountTransferService = accountTransferService;
     }
 
-    public Response<String> transferMoney(AccountTransferRequest request) throws Exception {
+    public void transferMoney(AccountTransferRequest request) throws Exception {
         try {
             log.info("transferMoney.in");
             validate(request);
-            Response<String> response = accountTransferService.transferMoney(request);
+            accountTransferService.transferMoney(request);
             log.info("transferMoney.out");
-            return response;
         } catch (Exception e) {
             log.error("transferMoney.err", e);
             throw e;
