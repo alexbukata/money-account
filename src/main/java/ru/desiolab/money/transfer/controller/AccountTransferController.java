@@ -3,6 +3,7 @@ package ru.desiolab.money.transfer.controller;
 import lombok.extern.slf4j.Slf4j;
 import ru.desiolab.money.transfer.dto.AccountTransferRequest;
 import ru.desiolab.money.transfer.dto.Response;
+import ru.desiolab.money.transfer.error.InvalidRequestException;
 import ru.desiolab.money.transfer.service.AccountTransferService;
 
 import javax.inject.Inject;
@@ -28,10 +29,10 @@ public class AccountTransferController {
 
     private void validate(AccountTransferRequest request) {
         if (request.fromAccountId() == null || request.toAccountId() == null || request.amount() == null) {
-            throw new RuntimeException("fromAccountId, toAccountId, amount is required parameters");
+            throw new InvalidRequestException("fromAccountId, toAccountId, amount is required parameters");
         }
         if (request.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("You can transfer only positive amount of money");
+            throw new InvalidRequestException("You can transfer only positive amount of money");
         }
     }
 }

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.desiolab.money.transfer.dto.Account;
 import ru.desiolab.money.transfer.dto.AccountTransferRequest;
 import ru.desiolab.money.transfer.dto.Response;
+import ru.desiolab.money.transfer.error.NotEnoughMoneyException;
 import ru.desiolab.money.transfer.repository.AccountDao;
 
 import javax.inject.Inject;
@@ -31,7 +32,7 @@ public class AccountTransferService {
         accountDao.doInTransaction(connection -> {
             Account fromAccount = accountDao.getAccount(connection, fromAccountId);
             if (fromAccount.amount().compareTo(amount) < 0) {
-                throw new RuntimeException("Not enough money on source account!");
+                throw new NotEnoughMoneyException("Not enough money on source account!");
             }
             Account toAccount = accountDao.getAccount(connection, toAccountId);
             BigDecimal newFromAccountAmount = fromAccount.amount().subtract(amount);
